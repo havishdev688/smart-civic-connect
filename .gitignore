@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment and secrets
+.env
+.env*.local
+backend/.env
+frontend/.env
+
+# Build outputs
+backend/dist/
+frontend/.next/
+frontend/out/
+.next/
+dist/
+build/
+
+# Local uploads
+backend/uploads/
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
