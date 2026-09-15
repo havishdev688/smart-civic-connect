@@ -1,0 +1,199 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CITIZEN
+  OFFICER
+  ADMIN
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum Status {
+  NEW
+  AI_PROCESSING
+  ASSIGNED
+  ACCEPTED
+  IN_PROGRESS
+  VERIFICATION
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  password        String
+  name            String
+  phone           String?
+  emailVerified   Boolean     @default(false)
+  emailVerifiedAt DateTime?
+  googleId        String?     @unique
+  role            Role        @default(CITIZEN)
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  complaintsFiled    Complaint[]     @relation("CitizenComplaints")
+  complaintsAssigned Complaint[]     @relation("OfficerComplaints")
+  statusUpdates      StatusHistory[] @relation("UpdatedBy")
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  chatMessages       ChatMessage[]
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  phone     String?
+  email     String?
+  otp       String
+  purpose   String   // 'LOGIN' | 'REGISTER'
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+  @@index([phone, purpose])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, token])
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique
+  icon        String
+  description String
+  slaHours    Int      @default(48)
+  createdAt   DateTime @default(now())
+
+  officers   User[]
+  complaints Complaint[]
+}
+
+model Complaint {
+  id             String    @id @default(uuid())
+  complaintNo    String    @unique
+  title          String
+  description    String
+  category       String
+  latitude       Float
+  longitude      Float
+  address        String
+  landmark       String?
+  status         Status    @default(NEW)
+  priority       Priority  @default(MEDIUM)
+  estimatedHours Int       @default(48)
+  
+  citizenId      String
+  citizen        User      @relation("CitizenComplaints", fields: [citizenId], references: [id])
+
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id])
+
+  officerId      String?
+  officer        User?     @relation("OfficerComplaints", fields: [officerId], references: [id])
+
+  duplicateOfId  String?
+  duplicateOf    Complaint? @relation("DuplicateChain", fields: [duplicateOfId], references: [id])
+  duplicates     Complaint[] @relation("DuplicateChain")
+
+  rating         Int?
+  feedbackText   String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  images         ComplaintImage[]
+  statusHistory  StatusHistory[]
+  aiPredictions  AIPrediction[]
+}
+
+model ComplaintImage {
+  id          String   @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  url         String
+  type        String   @default("BEFORE") // BEFORE or RESOLUTION
+  uploadedAt  DateTime @default(now())
+}
+
+model StatusHistory {
+  id             String    @id @default(uuid())
+  complaintId    String
+  complaint      Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  previousStatus Status?
+  newStatus      Status
+  remarks        String?
+  updatedById    String?
+  updatedBy      User?     @relation("UpdatedBy", fields: [updatedById], references: [id])
+  createdAt      DateTime  @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String   @default("STATUS_CHANGE")
+  createdAt DateTime @default(now())
+}
+
+model AIPrediction {
+  id                  String   @id @default(uuid())
+  complaintId         String
+  complaint           Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  predictedDepartment String
+  confidenceScore     Float
+  priorityAssigned    Priority
+  estimatedHours      Int
+  duplicateMatchRatio Float    @default(0.0)
+  rawAnalysis         String?
+  createdAt           DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   String
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  sessionToken String?
+  message      String
+  response     String
+  intent       String?
+  createdAt    DateTime @default(now())
+}
