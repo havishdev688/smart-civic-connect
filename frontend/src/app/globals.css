@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gov-lightBg text-gov-textMain font-sans antialiased selection:bg-gov-navy selection:text-white;
+  }
+}
+
+.ap-gov-emblem {
+  background: linear-gradient(135deg, #0B2C47 0%, #0E3A5D 50%, #11446E 100%);
+}
+
+.gov-hero-gradient {
+  background: linear-gradient(135deg, #0B2C47 0%, #0E3A5D 50%, #11446E 100%);
+}
+
+.glass-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+}
+
