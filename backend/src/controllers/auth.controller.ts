@@ -209,7 +209,7 @@ export class AuthController {
 
     // Check Resend Email API configuration
     const resendApiKey = process.env.RESEND_API_KEY;
-    const emailFrom = process.env.SMTP_FROM || 'Smart Civic Connect <onboarding@resend.dev>';
+    const emailFrom = 'Smart Civic Connect <onboarding@resend.dev>';
 
     const isEmailConfigured = Boolean(resendApiKey && resendApiKey.trim() !== '');
 
@@ -452,7 +452,7 @@ export class AuthController {
 
     // Check Resend Email API configuration
     const resendApiKey = process.env.RESEND_API_KEY;
-    const emailFrom = process.env.SMTP_FROM || 'Smart Civic Connect <onboarding@resend.dev>';
+    const emailFrom = 'Smart Civic Connect <onboarding@resend.dev>';
 
     const isEmailConfigured = Boolean(resendApiKey && resendApiKey.trim() !== '');
 
