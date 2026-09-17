@@ -234,7 +234,7 @@ export class AuthController {
           user: smtpUser.trim(),
           pass: smtpPass.trim(),
         },
-      });
+      } as any);
 
       await transporter.sendMail({
         from: smtpFrom.trim(),
@@ -517,7 +517,7 @@ export class AuthController {
             user: smtpUser.trim(),
             pass: smtpPass.trim(),
           },
-        });
+        } as any);
 
         await transporter.sendMail({
           from: smtpFrom.trim(),
