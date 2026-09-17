@@ -4,7 +4,7 @@
   "description": "NestJS Backend for Smart Civic Connect Platform",
   "scripts": {
     "build": "nest build",
-   "start": "node dist/src/main.js",
+    "start": "node dist/src/main.js",
     "start:dev": "ts-node-dev src/main.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^9.1.1",
     "reflect-metadata": "^0.2.1",
+    "resend": "^6.28.1",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
