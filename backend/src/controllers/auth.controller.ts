@@ -229,6 +229,7 @@ export class AuthController {
         host: smtpHost.trim(),
         port: portNumber,
         secure: portNumber === 465,
+        family: 4,
         auth: {
           user: smtpUser.trim(),
           pass: smtpPass.trim(),
@@ -511,6 +512,7 @@ export class AuthController {
           host: smtpHost.trim(),
           port: portNumber,
           secure: portNumber === 465,
+          family: 4,
           auth: {
             user: smtpUser.trim(),
             pass: smtpPass.trim(),
