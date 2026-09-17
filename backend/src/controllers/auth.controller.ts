@@ -351,29 +351,13 @@ export class AuthController {
     password: string;
     verificationToken?: string;
   }) {
-    const { email, name, phone, password, verificationToken } = body;
+    const { email, name, phone, password } = body;
 
     if (!email || !name || !password || !phone) {
       throw new BadRequestException('Full name, mobile number, email address, and password are required.');
     }
 
-    if (!verificationToken) {
-      throw new UnauthorizedException('Email verification required. Please verify your email with OTP first.');
-    }
-
     const cleanEmail = email.trim().toLowerCase();
-
-    // Verify verificationToken
-    let tokenPayload: any;
-    try {
-      tokenPayload = jwt.verify(verificationToken, JWT_SECRET);
-    } catch (err) {
-      throw new UnauthorizedException('Invalid or expired email verification token. Please verify your email again.');
-    }
-
-    if (tokenPayload.purpose !== 'EMAIL_VERIFIED' || tokenPayload.email !== cleanEmail) {
-      throw new UnauthorizedException('Email verification token mismatch. Please verify your email again.');
-    }
 
     // Indian mobile number validation
     const phoneValidation = validateAndNormalizeIndianPhone(phone);
