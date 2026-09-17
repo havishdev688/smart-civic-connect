@@ -173,7 +173,7 @@ export default function ReportComplaintPage() {
     setInfoMsg('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/complaints/generate-description', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/generate-description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageBase64 }),
@@ -203,7 +203,7 @@ export default function ReportComplaintPage() {
       if (title.trim().length > 2 || description.trim().length > 4 || imageBase64) {
         setIsAiAnalyzing(true);
         try {
-          const res = await fetch('http://localhost:5000/api/complaints/analyze-preview', {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/analyze-preview`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -332,7 +332,7 @@ export default function ReportComplaintPage() {
     try {
       // 1. Check for Duplicate Complaint if not already confirmed
       if (!forceDuplicateOfId) {
-        const dupRes = await fetch('http://localhost:5000/api/complaints/check-duplicate', {
+        const dupRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/check-duplicate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -356,7 +356,7 @@ export default function ReportComplaintPage() {
       }
 
       // 2. Submit Complaint to Database
-      const res = await fetch('http://localhost:5000/api/complaints', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

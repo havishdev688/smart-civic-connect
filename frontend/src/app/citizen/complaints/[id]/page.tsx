@@ -14,7 +14,7 @@ export default function ComplaintDetailPage({ params }: { params: { id: string }
   useEffect(() => {
     const fetchComplaint = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/complaints/${params.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/${params.id}`);
         if (res.ok) {
           const data: Complaint = await res.json();
           setComplaint(data);

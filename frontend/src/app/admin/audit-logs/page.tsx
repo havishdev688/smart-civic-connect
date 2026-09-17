@@ -18,7 +18,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/analytics/audit-logs');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/audit-logs`);
         if (res.ok) {
           setLogs(await res.json());
         }

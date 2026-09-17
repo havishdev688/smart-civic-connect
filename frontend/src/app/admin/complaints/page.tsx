@@ -17,8 +17,8 @@ export default function AdminComplaintsPage() {
   const fetchComplaintsAndDepts = async () => {
     try {
       const [cmpRes, deptRes] = await Promise.all([
-        fetch('http://localhost:5000/api/complaints'),
-        fetch('http://localhost:5000/api/departments')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/departments`)
       ]);
 
       if (cmpRes.ok) {
@@ -52,7 +52,7 @@ export default function AdminComplaintsPage() {
     if (!selectedCmp || !newDeptCode) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/complaints/${selectedCmp.id}/reassign`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/${selectedCmp.id}/reassign`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ departmentCode: newDeptCode })

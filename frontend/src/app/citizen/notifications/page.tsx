@@ -32,8 +32,8 @@ export default function NotificationsPage() {
         }
 
         const url = userId 
-          ? `http://localhost:5000/api/notifications?userId=${userId}`
-          : 'http://localhost:5000/api/notifications';
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/notifications?userId=${userId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/api/notifications`;
 
         const res = await fetch(url);
         if (res.ok) {
@@ -52,7 +52,7 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PUT' });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${id}/read`, { method: 'PUT' });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (err) {
       console.error(err);

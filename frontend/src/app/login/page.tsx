@@ -42,7 +42,7 @@ export default function LoginPage() {
     setInfoMsg('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -81,7 +81,7 @@ export default function LoginPage() {
     setInfoMsg('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),

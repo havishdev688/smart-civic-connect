@@ -18,7 +18,7 @@ export default function OfficerComplaintsPage() {
         const deptId = payload.departmentId;
         if (!deptId) return;
 
-        const res = await fetch(`http://localhost:5000/api/complaints?departmentId=${deptId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints?departmentId=${deptId}`);
         if (res.ok) {
           const data = await res.json();
           setComplaints(data.complaints || []);

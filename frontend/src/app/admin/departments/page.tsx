@@ -23,7 +23,7 @@ export default function DepartmentsPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/departments');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/departments`);
         if (res.ok) {
           setDepartments(await res.json());
         }
@@ -39,7 +39,7 @@ export default function DepartmentsPage() {
 
   const handleSLAUpdate = async (deptId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/departments/${deptId}/sla`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/departments/${deptId}/sla`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slaHours: newSLA })

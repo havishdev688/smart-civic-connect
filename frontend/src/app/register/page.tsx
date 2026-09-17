@@ -150,7 +150,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/send-email-otp', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -186,7 +186,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/send-email-otp', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,7 +226,7 @@ export default function RegisterPage() {
 
     try {
       // 1. Verify Email OTP on Backend
-      const verifyRes = await fetch('http://localhost:5000/api/auth/verify-email-otp', {
+      const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +244,7 @@ export default function RegisterPage() {
       const verificationToken = verifyData.verificationToken;
 
       // 2. Submit Final Registration with Backend Verification Proof
-      const regRes = await fetch('http://localhost:5000/api/auth/register', {
+      const regRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -329,7 +329,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-slate-700 font-bold mb-1">
-                  {t('auth.mobileNumber', 'Indian Mobile Number *')}
+                  {t('auth.mobileNumber', 'Mobile Number *')}
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -346,7 +346,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-bold mb-1">{t('auth.emailAddress', 'Email Address *')}</label>
+                <label className="block text-slate-700 font-bold mb-1">{t('auth.emailAddress', 'Email Address (for OTP verification) *')}</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input

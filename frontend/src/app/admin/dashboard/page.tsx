@@ -44,8 +44,8 @@ export default function AdminDashboard() {
     const fetchAll = async () => {
       try {
         const [analyticsRes, deptRes] = await Promise.all([
-          fetch('http://localhost:5000/api/analytics/dashboard'),
-          fetch('http://localhost:5000/api/departments'),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/dashboard`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/departments`),
         ]);
 
         if (analyticsRes.ok) {

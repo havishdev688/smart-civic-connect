@@ -35,8 +35,8 @@ export default function CitizenDashboard() {
         }
 
         const [complaintsRes, notifRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/complaints?citizenId=${citizenId}`),
-          fetch(`http://localhost:5000/api/notifications?userId=${citizenId}`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints?citizenId=${citizenId}`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications?userId=${citizenId}`),
         ]);
 
         if (complaintsRes.ok) {

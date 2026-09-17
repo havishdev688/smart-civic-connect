@@ -39,7 +39,7 @@ export default function OfficerComplaintDetail({ params }: { params: { id: strin
 
   const fetchComplaint = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/complaints/${params.id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/${params.id}`);
       if (res.ok) {
         const data: Complaint = await res.json();
         setComplaint(data);
@@ -110,7 +110,7 @@ export default function OfficerComplaintDetail({ params }: { params: { id: strin
       if (newStatus === 'RESOLVED' && resPhoto && resPhoto.startsWith('data:image')) {
         setUploadingPhoto(true);
         try {
-          const uploadRes = await fetch('http://localhost:5000/api/upload', {
+          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ image: resPhoto }),
@@ -129,7 +129,7 @@ export default function OfficerComplaintDetail({ params }: { params: { id: strin
         }
       }
 
-      const res = await fetch(`http://localhost:5000/api/complaints/${complaint.id}/status`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints/${complaint.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

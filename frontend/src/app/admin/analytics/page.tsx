@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/analytics/dashboard');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/dashboard`);
         if (res.ok) {
           setData(await res.json());
         }

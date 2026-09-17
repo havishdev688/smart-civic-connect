@@ -24,7 +24,7 @@ export default function MyComplaintsPage() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const citizenId = payload.id;
 
-        const res = await fetch(`http://localhost:5000/api/complaints?citizenId=${citizenId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/complaints?citizenId=${citizenId}`);
         if (res.ok) {
           const data = await res.json();
           setComplaints(data.complaints || []);
