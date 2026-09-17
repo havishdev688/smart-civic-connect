@@ -2,7 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException, Ba
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { DbService } from '../services/db.service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'smart_civic_connect_ap_secret_2026';
@@ -207,37 +207,20 @@ export class AuthController {
       }
     });
 
-    // Check SMTP configuration
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpFrom = process.env.SMTP_FROM || 'Smart Civic Connect <no-reply@ap.gov.in>';
+    // Check Resend Email API configuration
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const emailFrom = process.env.SMTP_FROM || 'Smart Civic Connect <onboarding@resend.dev>';
 
-    const isEmailConfigured = Boolean(
-      smtpHost && smtpPort && smtpUser && smtpPass &&
-      smtpHost.trim() !== '' && smtpUser.trim() !== '' && smtpPass.trim() !== ''
-    );
+    const isEmailConfigured = Boolean(resendApiKey && resendApiKey.trim() !== '');
 
     if (!isEmailConfigured) {
-      throw new BadRequestException('Email service is not configured on the server. Please check SMTP settings.');
+      throw new BadRequestException('Email service is not configured on the server. Please check RESEND_API_KEY settings.');
     }
 
     try {
-      const portNumber = parseInt(smtpPort?.trim() || '587', 10);
-      const transporter = nodemailer.createTransport({
-        host: smtpHost.trim(),
-        port: portNumber,
-        secure: portNumber === 465,
-        family: 4,
-        auth: {
-          user: smtpUser.trim(),
-          pass: smtpPass.trim(),
-        },
-      } as any);
-
-      await transporter.sendMail({
-        from: smtpFrom.trim(),
+      const resend = new Resend(resendApiKey.trim());
+      const { data, error } = await resend.emails.send({
+        from: emailFrom.trim(),
         to: cleanEmail,
         subject: 'Your Verification Code - Smart Civic Connect',
         text: `Namaste ${name || 'Citizen'},\n\nYour Smart Civic Connect email verification code is: ${rawOtp}\n\nThis code expires in 10 minutes and can only be used once.\n\nIf you did not request this, please ignore this email.\n\nSmart Civic Connect\nMunicipal Administration & Urban Development`,
@@ -262,9 +245,15 @@ export class AuthController {
         `,
       });
 
+      if (error) {
+        console.error(`[Email Service] Failed to send email via Resend API:`, error);
+        throw new BadRequestException(`Failed to dispatch verification email: ${error.message}`);
+      }
+
       console.log(`[Email Service] Registration verification OTP dispatched to ${cleanEmail}`);
     } catch (err: any) {
-      console.error(`[Email Service] Failed to send email via SMTP:`, err);
+      console.error(`[Email Service] Failed to send email via Resend:`, err);
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(`Failed to dispatch verification email: ${err.message}`);
     }
 
@@ -461,21 +450,15 @@ export class AuthController {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check SMTP Configuration
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpFrom = process.env.SMTP_FROM || 'Smart Civic Connect <no-reply@ap.gov.in>';
+    // Check Resend Email API configuration
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const emailFrom = process.env.SMTP_FROM || 'Smart Civic Connect <onboarding@resend.dev>';
 
-    const isEmailConfigured = Boolean(
-      smtpHost && smtpPort && smtpUser && smtpPass &&
-      smtpHost.trim() !== '' && smtpUser.trim() !== '' && smtpPass.trim() !== ''
-    );
+    const isEmailConfigured = Boolean(resendApiKey && resendApiKey.trim() !== '');
 
     if (!isEmailConfigured) {
       throw new BadRequestException(
-        'Email service is not configured on the server. Real password reset delivery requires setting SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in backend .env.'
+        'Email service is not configured on the server. Real password reset delivery requires setting RESEND_API_KEY in backend environment.'
       );
     }
 
@@ -507,20 +490,9 @@ export class AuthController {
       const resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(cleanEmail)}`;
 
       try {
-        const portNumber = parseInt(smtpPort?.trim() || '587', 10);
-        const transporter = nodemailer.createTransport({
-          host: smtpHost.trim(),
-          port: portNumber,
-          secure: portNumber === 465,
-          family: 4,
-          auth: {
-            user: smtpUser.trim(),
-            pass: smtpPass.trim(),
-          },
-        } as any);
-
-        await transporter.sendMail({
-          from: smtpFrom.trim(),
+        const resend = new Resend(resendApiKey.trim());
+        const { data, error } = await resend.emails.send({
+          from: emailFrom.trim(),
           to: cleanEmail,
           subject: 'Password Reset Request - Smart Civic Connect',
           text: `Namaste ${user.name},\n\nA password reset request was received for your Smart Civic Connect account.\n\nPlease use the following link to reset your password:\n${resetLink}\n\nThis link is valid for 15 minutes and can only be used once.\n\nIf you did not request this, please ignore this email.\n\nSmart Civic Connect\nMunicipal Administration & Urban Development`,
@@ -543,10 +515,16 @@ export class AuthController {
           `,
         });
 
+        if (error) {
+          console.error(`[Email Service] Failed to send password reset email via Resend API:`, error);
+          throw new BadRequestException(`Failed to dispatch password reset email: ${error.message}`);
+        }
+
         console.log(`[Email Service] Password reset email sent successfully to ${cleanEmail}`);
       } catch (err: any) {
-        console.error(`[Email Service] Failed to send email via SMTP:`, err);
-        throw new BadRequestException(`Failed to dispatch password reset email via SMTP: ${err.message}`);
+        console.error(`[Email Service] Failed to send password reset email via Resend:`, err);
+        if (err instanceof BadRequestException) throw err;
+        throw new BadRequestException(`Failed to dispatch password reset email: ${err.message}`);
       }
     }
 
