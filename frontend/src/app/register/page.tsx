@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -9,11 +9,8 @@ import {
   Phone,
   Lock,
   ArrowRight,
-  ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  KeyRound,
-  RefreshCw
 } from 'lucide-react';
 import { useLanguage } from '@/context/language-context';
 
@@ -89,9 +86,6 @@ function validateAndNormalizeIndianPhone(input: string): { isValid: boolean; nor
 
 export default function RegisterPage() {
   const { t, language } = useLanguage();
-  
-  // Step state: 1 = Details input, 2 = Email OTP verification
-  const [step, setStep] = useState<1 | 2>(1);
 
   // Form Fields
   const [name, setName] = useState('');
@@ -99,28 +93,14 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
-  // OTP State
-  const [otp, setOtp] = useState('');
-  const [normalizedPhone, setNormalizedPhone] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
-  // Resend Timer Countdown
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (resendCooldown > 0) {
-      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [resendCooldown]);
-
-  // Step 1: Send Verification OTP to Email
-  const handleSendOtp = async (e: React.FormEvent) => {
+  // Direct Citizen Registration
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setInfoMsg('');
@@ -150,126 +130,31 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-email-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim().toLowerCase(),
-          phone: phone.trim(),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || (language === 'TE' ? 'OTP పంపడం విఫలమైంది.' : 'Failed to dispatch verification code.'));
-      }
-
-      setNormalizedPhone(data.normalizedPhone || phoneCheck.normalized);
-      setStep(2);
-      setResendCooldown(60);
-      setInfoMsg(data.message || `Verification OTP has been sent to ${email.trim().toLowerCase()}`);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error requesting verification OTP. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 2: Resend Email OTP
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0 || loading) return;
-
-    setErrorMsg('');
-    setInfoMsg('');
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-email-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to resend verification OTP.');
-      }
-
-      setResendCooldown(60);
-      setInfoMsg(language === 'TE' ? 'కొత్త OTP మీ ఈమెయిల్‌కు పంపబడింది.' : `A new verification code has been dispatched to ${email.trim().toLowerCase()}`);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to resend OTP.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 2: Verify OTP and Register Account
-  const handleVerifyAndRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setInfoMsg('');
-
-    if (!otp.trim() || otp.trim().length !== 6) {
-      setErrorMsg(language === 'TE' ? 'దయచేసి 6-అంకెల OTP కోడ్‌ను నమోదు చేయండి.' : 'Please enter the valid 6-digit verification code.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // 1. Verify Email OTP on Backend
-      const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          otp: otp.trim(),
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-
-      if (!verifyRes.ok) {
-        throw new Error(verifyData.message || (language === 'TE' ? 'OTP సరిపోలలేదు.' : 'Invalid or expired verification code.'));
-      }
-
-      const verificationToken = verifyData.verificationToken;
-
-      // 2. Submit Final Registration with Backend Verification Proof
-      const regRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          phone: normalizedPhone || phone.trim(),
+          phone: phoneCheck.normalized || phone.trim(),
           password,
-          verificationToken,
         }),
       });
 
-      const regData = await regRes.json();
+      const data = await res.json();
 
-      if (!regRes.ok) {
-        throw new Error(regData.message || (language === 'TE' ? 'నమోదు విఫలమైంది.' : 'Registration failed.'));
+      if (!res.ok) {
+        throw new Error(data.message || (language === 'TE' ? 'నమోదు విఫలమైంది.' : 'Registration failed.'));
       }
 
       // Save token and session
-      localStorage.setItem('scc_role', regData.user.role);
-      localStorage.setItem('scc_user_name', regData.user.name);
-      localStorage.setItem('scc_token', regData.token);
+      localStorage.setItem('scc_role', data.user.role);
+      localStorage.setItem('scc_user_name', data.user.name);
+      localStorage.setItem('scc_token', data.token);
 
       window.location.href = '/citizen/dashboard';
     } catch (err: any) {
-      setErrorMsg(err.message || (language === 'TE' ? 'ధృవీకరణ లోపం. దయచేసి వివరాలను తనిఖీ చేయండి.' : 'Verification error. Please check your code.'));
+      setErrorMsg(err.message || (language === 'TE' ? 'నమోదు లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.' : 'Registration error. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -284,12 +169,10 @@ export default function RegisterPage() {
             <ShieldCheck className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-extrabold tracking-tight">
-            {step === 1 ? t('auth.registerTitle', 'Citizen Registration') : 'Verify Email Address'}
+            {t('auth.registerTitle', 'Citizen Registration')}
           </h2>
           <p className="text-blue-100 text-xs">
-            {step === 1
-              ? (language === 'TE' ? 'మీ స్మార్ట్ సివిక్ కనెక్ట్ ఖాతాను సృష్టించండి' : 'Create your Smart Civic Connect Citizen Account')
-              : (language === 'TE' ? 'ఈమెయిల్ OTP ద్వారా ధృవీకరించండి' : 'Enter 6-digit OTP code sent to your email')}
+            {t('auth.registerSubtitle', 'Create your Smart Civic Connect Citizen Account')}
           </p>
         </div>
 
@@ -309,173 +192,106 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 1 ? (
-            /* STEP 1: ACCOUNT INFORMATION */
-            <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">{t('auth.fullName', 'Full Name (as in Aadhaar/Voter ID) *')}</label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. P. Venkat Reddy"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
-                  />
-                </div>
+          {/* REGISTRATION FORM */}
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">{t('auth.fullName', 'Full Name (as in Aadhaar/Voter ID) *')}</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. P. Venkat Reddy"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
+                />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">
-                  {t('auth.mobileNumber', 'Mobile Number *')}
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="10-digit number (e.g. 9876543210 / +91)"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800 font-medium"
-                  />
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1">Valid 10-digit mobile starting with 6, 7, 8, or 9 (Validated contact number)</p>
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">
+                {t('auth.mobileNumber', 'Mobile Number *')}
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="10-digit number (e.g. 9876543210 / +91)"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800 font-medium"
+                />
               </div>
+              <p className="text-[10px] text-slate-500 mt-1">Valid 10-digit mobile starting with 6, 7, 8, or 9 (Validated contact number)</p>
+            </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">{t('auth.emailAddress', 'Email Address (for OTP verification) *')}</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="citizen@example.com"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
-                  />
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1">A real 6-digit verification code will be dispatched to this email</p>
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">{t('auth.emailAddress', 'Email Address *')}</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="citizen@example.com"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
+                />
               </div>
+              <p className="text-[10px] text-slate-500 mt-1">Enter a valid email address</p>
+            </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">{t('auth.password', 'Password *')}</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create secure password (min 6 characters)..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
-                  />
-                </div>
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">{t('auth.password', 'Password *')}</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create secure password (min 6 characters)..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
+                />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">{language === 'TE' ? 'పాస్‌వర్డ్ నిర్ధారించండి *' : 'Confirm Password *'}</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
-                  />
-                </div>
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">{language === 'TE' ? 'పాస్‌వర్డ్ నిర్ధారించండి *' : 'Confirm Password *'}</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-gov-navy text-slate-800"
+                />
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gov-navy hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow transition-colors flex items-center justify-center gap-2 text-sm mt-2 disabled:opacity-60"
-              >
-                {loading ? 'Sending Verification Code...' : 'Send Verification OTP'} <ArrowRight className="w-4 h-4" />
-              </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gov-navy hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow transition-colors flex items-center justify-center gap-2 text-sm mt-2 disabled:opacity-60"
+            >
+              {loading
+                ? (language === 'TE' ? 'ఖాతా సృష్టిస్తోంది...' : 'Creating Account...')
+                : (language === 'TE' ? 'నమోదు చేయండి' : 'Register')} <ArrowRight className="w-4 h-4" />
+            </button>
 
-              <div className="text-center pt-2 text-slate-600">
-                {t('auth.alreadyRegistered', 'Already registered? Login here')}{' '}
-                <Link href="/login" className="text-gov-navy font-bold hover:underline">
-                  {t('nav.login', 'Login')}
-                </Link>
-              </div>
-            </form>
-          ) : (
-            /* STEP 2: EMAIL OTP VERIFICATION */
-            <form onSubmit={handleVerifyAndRegister} className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center space-y-1">
-                <div className="text-gov-navy font-bold text-xs flex items-center justify-center gap-1.5">
-                  <Mail className="w-4 h-4 text-gov-navy" /> Verification Code Dispatched
-                </div>
-                <p className="text-slate-600 text-xs">
-                  We have sent a 6-digit code to <br />
-                  <strong className="text-slate-900 font-semibold">{email.trim().toLowerCase()}</strong>
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-bold mb-1.5 text-center">
-                  Enter 6-Digit Email OTP *
-                </label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:outline-none focus:border-gov-navy text-center text-xl font-mono tracking-widest text-slate-900 font-bold bg-slate-50 focus:bg-white"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500 text-center mt-1">
-                  Code expires in 10 minutes
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full bg-gov-navy hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-60"
-              >
-                {loading ? 'Verifying & Creating Account...' : 'Verify OTP & Create Account'} <CheckCircle2 className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep(1);
-                    setErrorMsg('');
-                    setInfoMsg('');
-                  }}
-                  className="text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Edit Details
-                </button>
-
-                <button
-                  type="button"
-                  disabled={resendCooldown > 0 || loading}
-                  onClick={handleResendOtp}
-                  className="text-gov-navy hover:underline font-bold disabled:text-slate-400 disabled:no-underline flex items-center gap-1"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend OTP'}
-                </button>
-              </div>
-            </form>
-          )}
+            <div className="text-center pt-2 text-slate-600">
+              {t('auth.alreadyRegistered', 'Already registered? Login here')}{' '}
+              <Link href="/login" className="text-gov-navy font-bold hover:underline">
+                {t('nav.login', 'Login')}
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 }
-
